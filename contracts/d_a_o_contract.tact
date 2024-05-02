@@ -20,7 +20,7 @@ contract DAOContract with Deployable, DAOWallet {
     const dao_max_quorum: Int = 90; // 90% of the total voters
 
     // hash -> Proposal
-    proposals: map<String, Proposal>; 
+    proposals: map<Int, Proposal>; 
     proposals_total: Int as uint14;
     dao_status: Int = 0; 
     /*
@@ -49,8 +49,30 @@ contract DAOContract with Deployable, DAOWallet {
         return contractAddress(init);
     }
 
-    fun hashProposal(params: ProposalParams): String{
-        return sha256(params.title, params.description, params.link);
+    fun hashProposal(params: ProposalParams): Int {
+        require(params.targetsLength == params.valuesLength, 
+            "Targets and Values length mismatch");
+
+        let cb = beginCell();
+        cb.storeInt(params.description_hash);
+        cb.storeInt(params.vote_start);
+        cb.storeInt(params.vote_end);
+        cb.storeInt(params.quorum);
+        cb.storeInt(params.execution_delay);
+        
+        let i: Int = params.targetsStart;
+        repeat (params.targetsLength) {
+            cb.storeAddress(params.targets[i]);
+            i = i + 1;
+        }
+        
+        i = params.valuesStart;
+        repeat (params.valuesLength) {
+            cb.storeInt(params.values[i]);
+            i = i + 1;
+        }
+        cb.endCell();
+        return cb.hash();
     }
 
     fun makeCall(){

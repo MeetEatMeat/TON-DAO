@@ -4,7 +4,7 @@ message DeployNewDAO {
 
 struct Proposal {
     // 17 total fields
-    description_hash: String; //хэш описания
+    description_hash: Int; //хэш описания
     vote_start: Int; //timestamp начала голосования (должен быть в будущем, и не ранее, чем через число дней, определённое в ланчпаде)
     vote_end: Int;//timestamp окончания голосования (должно быть > voteStart, и не ранее, чем число дней определённое в ланчпаде)
     quorum: Int; //не менее и не более определённого в ланчпаде
@@ -20,6 +20,20 @@ struct Proposal {
     values: map<Int, Int>; // - значения для перечисления
     valuesLength: Int as uint8 = 0;
     valuesStart: Int as uint8 = 0;
+}
+
+message ProposalParams {
+    description_hash: Int;
+    vote_start: Int;
+    vote_end: Int;
+    quorum: Int;
+    execution_delay: Int;
+    targets: map<Int, Address>;
+    targetsLength: Int;
+    targetsStart: Int;
+    values: map<Int, Int>;
+    valuesLength: Int;
+    valuesStart: Int;
 }
 
 // Jetton Structs
