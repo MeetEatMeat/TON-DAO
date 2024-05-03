@@ -15,9 +15,11 @@ Struct Proposal {
         vote_end (int) - timestamp окончания голосования (должно быть > voteStart, и не ранее, чем число дней определённое в ланчпаде)
         quorum (int) - не менее и не более определённого в ланчпаде
         execution_delay (int) - не менее и не более определённого в ланчпаде
+        voted: bool; // - завершился ли период голосования
+        executed: bool; // - был ли исполнен пропозал
+        canceled: bool;
         targets (Address[]) - адреса кошельков для перечислений
         values (int[]) - значения для перечисления
-        calldatas (String[]) - данные для вызова
 }
 
 
@@ -30,7 +32,7 @@ proposal (Proposal)
 
 
 Get Функции:
-hashProposal(desc_hash, vote_start, vote_end, quorum, execution_delay, targets[], values[], calldatas[]) (String) - вычисляет хэш из введённых данных
+hashProposal(desc_hash, vote_start, vote_end, quorum, execution_delay, targets[], values[]) (Int) - вычисляет хэш из введённых данных
 getProposalStatus(proposal_id) (int) - возвращает статус пропозала исходя из текущего статуса выполнения. Может быть Выполнен, Отменён, Ожидание, Голосование
 getDeadline(proposal_id) (int) - возвращает proposal.vote_end
 getVotes(account) (int) - возвращает voting power аккаунта

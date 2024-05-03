@@ -43,10 +43,30 @@ contract DAOContract with Deployable, DAOWallet {
         self.collectionAdmin = params.newAdmin;
     }
 
-    get fun calculateAddress(address: Address): Address{
-        let init: StateInit = initOf Certificate(self.certificatesCount, myAddress());
+    get fun calculateWalletAddress(to: Address): Address{
+        let init: StateInit = self.getJettonWalletInit(to);
 
         return contractAddress(init);
+    }
+
+    get fun hashProposal(params: ProposalParams): Int {
+        return self.hashProposal(params);
+    }
+
+    get fun getProposalStatus(proposal_id: Int): Int {
+        let proposal = self.proposals[proposal_id];
+        
+        if (proposal.canceled){
+            return -1; //Canceled
+        }
+        if (proposal.executed){
+            return 2; //Executed
+        }
+        if (proposal.vote_end > now() && proposal.vote_start <= now()){
+            return 1; //Voting
+        }
+        return 0; //Not started
+        // if executed 
     }
 
     fun hashProposal(params: ProposalParams): Int {
