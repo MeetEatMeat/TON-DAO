@@ -37,11 +37,11 @@ contract DAOContract with Deployable, DAOWallet {
         self.max_supply = max_supply;
     }
 
-    receive(params: NewAdmin){
-        self.requireOwner();
-        require(params.newAdmin != newAddress(0,0), "Invalid address");
-        self.collectionAdmin = params.newAdmin;
-    }
+    // receive(params: NewAdmin){
+    //     self.requireOwner();
+    //     require(params.newAdmin != newAddress(0,0), "Invalid address");
+    //     self.collectionAdmin = params.newAdmin;
+    // }
 
     get fun calculateWalletAddress(to: Address): Address{
         let init: StateInit = self.getJettonWalletInit(to);
@@ -55,7 +55,7 @@ contract DAOContract with Deployable, DAOWallet {
 
     get fun getProposalStatus(proposal_id: Int): Int {
         let proposal = self.proposals[proposal_id];
-        
+
         if (proposal.canceled){
             return -1; //Canceled
         }
@@ -68,6 +68,22 @@ contract DAOContract with Deployable, DAOWallet {
         return 0; //Not started
         // if executed 
     }
+
+    get fun getDeadline(proposal_id: Int): Int {
+        let proposal = self.proposals[proposal_id];
+        return proposal.vote_end;
+    }
+
+    // get fun getVotes(user: Address): Int {
+    //     let user_wallet = self.calculateWalletAddress(user);
+    //     self.makeCall(CallParams{
+    //         to: user_wallet,
+    //         value: "0.1",
+    //         mode: 0,
+    //         body: "getWalletData".asComment(),
+    //         bounce: false
+    //     });
+    // }
 
     fun hashProposal(params: ProposalParams): Int {
         require(params.targetsLength == params.valuesLength, 
@@ -95,25 +111,32 @@ contract DAOContract with Deployable, DAOWallet {
         return cb.hash();
     }
 
-    fun makeCall(){
+    fun makeCall(params: CallParams){
         send(SendParameters{
-            to: self.lastMintedCertificate,
-            value: ton("0.1"),
-            mode: SendIgnoreErrors,
-            body: SetCertificateParams {link: params.link, owner: params.owner}.toCell(),
-            bounce: false
+            to: params.to,
+            value: ton(params.value),
+            mode: params.mode,
+            // body: SetCertificateParams {link: params.link, owner: params.owner}.toCell(),
+            body: params.body,
+            bounce: params.bounce
         });
     }
 
     // ==================== DAOWallet functions ====================
 
-    receive("Owner: MintClose") {
+    receive("Owner: DepositClose") {
         let ctx: Context = context();
         require(ctx.sender == self.owner, "Not Owner");
         self.mintable = false;
     }
 
-    receive(msg: Mint) {
+    receive("Owner: DepositOpen") {
+        let ctx: Context = context();
+        require(ctx.sender == self.owner, "Not Owner");
+        self.mintable = true;
+    }
+
+    receive(msg: Deposit) {
         let ctx: Context = context();
         require(ctx.sender == self.owner, "Not Owner");
         require(self.mintable, "Can't Mint Anymore");

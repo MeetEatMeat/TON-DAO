@@ -45,6 +45,20 @@ struct JettonWalletData {
     walletCode: Cell;
 }
 
+message WalletData {
+    balance: Int;
+    owner: Address;
+    master: Address;
+}
+
+struct CallParams{
+    to: Address;
+    value: String;
+    mode: Int as uint8;
+    body: Cell;
+    bounce: Bool;
+}
+
 message(0xf8a7ea5) TokenTransfer {
     queryId: Int as uint64;
     amount: Int as coins;
@@ -93,7 +107,7 @@ message TokenUpdateContent {
     content: Cell;
 }
 
-message Mint {
+message Deposit {
     amount: Int;
     receiver: Address;
 }
