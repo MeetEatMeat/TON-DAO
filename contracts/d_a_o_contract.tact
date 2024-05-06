@@ -5,7 +5,7 @@ import "./imports/dao_wallet.tact";
 contract DAOContract with Deployable, DAOWallet {
     // DAOWallet state
     totalSupply: Int as coins;
-    mintable: true;
+    mintable: Bool;
     owner: Address;
     max_supply: Int as coins;
     // End of DAOWallet state
@@ -21,7 +21,7 @@ contract DAOContract with Deployable, DAOWallet {
 
     // hash -> Proposal
     proposals: map<Int, Proposal>; 
-    proposals_total: Int as uint14;
+    proposals_total: Int as uint32;
     dao_status: Int = 0; 
     /*
     -1: active, 
@@ -30,11 +30,12 @@ contract DAOContract with Deployable, DAOWallet {
     */
 
     init(params: DeployNewDAO) {
-        self.admin = params.admin;
+        self.owner = params.owner;
         self.totalSupply = 0;
         self.mintable = true;
-        self.owner = owner;
-        self.max_supply = max_supply;
+        self.max_supply = params.max_supply;
+        self.proposals_total = 0;
+        self.dao_status = 0;
     }
 
     // receive(params: NewAdmin){
@@ -50,28 +51,38 @@ contract DAOContract with Deployable, DAOWallet {
     }
 
     get fun hashProposal(params: ProposalParams): Int {
-        return self.hashProposal(params);
+        return self.getHashProposal(params);
     }
 
     get fun getProposalStatus(proposal_id: Int): Int {
-        let proposal = self.proposals[proposal_id];
+        let proposal: Proposal? = self.proposals.get(proposal_id);
 
-        if (proposal.canceled){
+        if (proposal == null) {
+            return -2; // Proposal not found
+        }
+
+        let actualProposal: Proposal = proposal!!;
+
+        if (actualProposal.canceled){
             return -1; //Canceled
         }
-        if (proposal.executed){
+        if (actualProposal.executed){
             return 2; //Executed
         }
-        if (proposal.vote_end > now() && proposal.vote_start <= now()){
+        if (actualProposal.vote_end > now() && actualProposal.vote_start <= now()){
             return 1; //Voting
         }
         return 0; //Not started
-        // if executed 
     }
 
     get fun getDeadline(proposal_id: Int): Int {
-        let proposal = self.proposals[proposal_id];
-        return proposal.vote_end;
+        let proposal: Proposal? = self.proposals.get(proposal_id);
+        if (proposal == null) {
+            return 0; // Proposal not found
+        } else {
+            let actualProposal: Proposal = proposal!!;
+            return actualProposal.vote_end;
+        }
     }
 
     // get fun getVotes(user: Address): Int {
@@ -85,42 +96,42 @@ contract DAOContract with Deployable, DAOWallet {
     //     });
     // }
 
-    fun hashProposal(params: ProposalParams): Int {
+    fun getHashProposal(params: ProposalParams): Int {
         require(params.targetsLength == params.valuesLength, 
             "Targets and Values length mismatch");
 
-        let cb = beginCell();
-        cb.storeInt(params.description_hash);
-        cb.storeInt(params.vote_start);
-        cb.storeInt(params.vote_end);
-        cb.storeInt(params.quorum);
-        cb.storeInt(params.execution_delay);
+        let cb: Builder = beginCell();
+        cb.storeInt(params.description_hash, 32);
+        cb.storeInt(params.vote_start, 32);
+        cb.storeInt(params.vote_end, 32);
+        cb.storeInt(params.quorum, 32);
+        cb.storeInt(params.execution_delay, 32);
         
         let i: Int = params.targetsStart;
         repeat (params.targetsLength) {
-            cb.storeAddress(params.targets[i]);
+            cb.storeAddress(params.targets.get(i)!!);
             i = i + 1;
         }
         
         i = params.valuesStart;
         repeat (params.valuesLength) {
-            cb.storeInt(params.values[i]);
+            cb.storeInt(params.values.get(i)!!, 32);
             i = i + 1;
         }
         cb.endCell();
-        return cb.hash();
+        return cb.asCell().hash();
     }
 
-    fun makeCall(params: CallParams){
-        send(SendParameters{
-            to: params.to,
-            value: ton(params.value),
-            mode: params.mode,
-            // body: SetCertificateParams {link: params.link, owner: params.owner}.toCell(),
-            body: params.body,
-            bounce: params.bounce
-        });
-    }
+    // fun makeCall(params: CallParams){
+    //     send(SendParameters{
+    //         to: params.to,
+    //         value: params.value,
+    //         mode: params.mode,
+    //         // body: SetCertificateParams {link: params.link, owner: params.owner}.toCell(),
+    //         body: params.body,
+    //         bounce: params.bounce
+    //     });
+    // }
 
     // ==================== DAOWallet functions ====================
 

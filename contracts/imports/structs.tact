@@ -1,5 +1,6 @@
 message DeployNewDAO {
-    admin: Address;
+    owner: Address;
+    max_supply: Int;
 }
 
 struct Proposal {
@@ -9,9 +10,9 @@ struct Proposal {
     vote_end: Int;//timestamp окончания голосования (должно быть > voteStart, и не ранее, чем число дней определённое в ланчпаде)
     quorum: Int; //не менее и не более определённого в ланчпаде
     execution_delay: Int; // - не менее и не более определённого в ланчпаде
-    voted: bool; // - завершился ли период голосования
-    executed: bool; // - был ли исполнен пропозал
-    canceled: bool; // - был ли отменен пропозал
+    voted: Bool; // - завершился ли период голосования
+    executed: Bool; // - был ли исполнен пропозал
+    canceled: Bool; // - был ли отменен пропозал
 
     targets: map<Int, Address>; // - адреса для трансфера
     targetsLength: Int as uint8 = 0;
@@ -116,6 +117,5 @@ struct JettonData {
     totalSupply: Int;
     mintable: Bool;
     owner: Address;
-    content: Cell;
     walletCode: Cell;
 }

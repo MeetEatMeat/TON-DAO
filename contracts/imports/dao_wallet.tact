@@ -5,14 +5,14 @@ import "./structs";
 @interface("org.ton.jetton.master")
 trait DAOWallet with Ownable {
     totalSupply: Int; // Already set initially 
-    mintable: true;
+    mintable: Bool; // Allow minting
     owner: Address;
     max_supply: Int; // This is not in the TEP-74 interface
 
-    receive(msg: TokenUpdateContent) {
-        self.requireOwner();                // Allow changing content only by owner
-        self.content = msg.content;         // Update content
-    }
+    // receive(msg: TokenUpdateContent) {
+    //     self.requireOwner();                // Allow changing content only by owner
+    //     self.content = msg.content;         // Update content
+    // }
 
     receive(msg: TokenBurnNotification) {
         self.requireWallet(msg.owner);                     // Check wallet
@@ -74,7 +74,6 @@ trait DAOWallet with Ownable {
             totalSupply: self.totalSupply, 
             mintable: self.mintable, 
             owner: self.owner, 
-            content: self.content, 
             walletCode: code
         };
     }

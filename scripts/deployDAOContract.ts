@@ -9,7 +9,7 @@ export async function run(provider: NetworkProvider) {
         provider.sender(),
         {
             value: toNano('0.05'),
-        },
+        }, 
         {
             $$type: 'Deploy',
             queryId: 0n,
