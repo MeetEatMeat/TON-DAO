@@ -1,0 +1,15 @@
+{
+    "projects": [
+      {
+        "name": "TON-DAO",
+        "path": "./contracts/d_a_o_contract.tact",
+        "output": "./output",
+        "options": {
+          "debug": true,
+          "experimental": {
+            "inline": true
+          }
+        }
+      }
+    ]
+  }

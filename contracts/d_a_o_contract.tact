@@ -85,6 +85,10 @@ contract DAOContract with Deployable, DAOWallet {
         }
     }
 
+    get fun getMintable(): Bool {
+        return self.mintable;
+    }
+
     // get fun getVotes(user: Address): Int {
     //     let user_wallet = self.calculateWalletAddress(user);
     //     self.makeCall(CallParams{
