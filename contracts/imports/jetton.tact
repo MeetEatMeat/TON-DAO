@@ -48,29 +48,23 @@ contract JettonDefaultWallet {
             });
     }
 
-    receive(msg: TokenTransferInternal) { // 0x178d4519
+    receive(msg: TokenTransferInternal) {
         let ctx: Context = context();
-
         if (ctx.sender != self.master) {
             let sinit: StateInit = initOf JettonDefaultWallet(self.master, msg.from);
             require(contractAddress(sinit) == ctx.sender, "Invalid sender!");
         }
-
-        // Update balance
         self.balance = self.balance + msg.amount;
         require(self.balance >= 0, "Invalid balance"); 
-        
-        // Get value for gas
         let msgValue: Int = self.msgValue(ctx.value);  
         let fwdFee: Int = ctx.readForwardFee();
         msgValue = msgValue - msg.forward_ton_amount - fwdFee;
         
-         // 0x7362d09c - notify the new owner of JettonToken that the transfer is complete
         if (msg.forward_ton_amount > 0) { 
             send(SendParameters{
                 to: self.owner,
                 value: msg.forward_ton_amount,
-                mode: SendPayGasSeparately + SendIgnoreErrors,
+                mode: SendPayGasSeparately,
                 bounce: false,
                 body: TokenNotification {
                     queryId: msg.queryId,
@@ -81,7 +75,6 @@ contract JettonDefaultWallet {
             });
         }
 
-        // 0xd53276db -- Cashback to the original Sender
         if (msg.response_destination != null) { 
             send(SendParameters {
                 to: msg.response_destination, 
@@ -94,6 +87,40 @@ contract JettonDefaultWallet {
             });
         }
     }
+
+    // receive(msg: InternalTransfer) {
+    //     let ctx: Context = context();
+    //     if(ctx.sender != self.master) {
+    //         let init: StateInit = initOf JettonWallet(msg.from, self.master);
+    //         require(contractAddress(init) == ctx.sender, "Invalid sender");
+    //     }
+    //     self.balance = self.balance + msg.amount;
+    //     require(self.balance >= 0, "Invalid token amount");
+    //     let msgValue: Int = ctx.value;
+    //     msgValue = msgValue - gasConsumption - (minTons - min(minTons, myBalance() - ctx.value));
+    //     if(msg.forward_ton_amount > 0) {
+    //         msgValue = msgValue - msg.forward_ton_amount - ctx.readForwardFee();
+    //         send(SendParameters {
+    //             to: self.owner,
+    //             value: msg.forward_ton_amount,
+    //             mode: SendPayGasSeparately,
+    //             bounce: false,
+    //             body: TransferNotification {
+    //                 query_id: msg.query_id,
+    //                 amount: msg.amount,
+    //                 sender: msg.from,
+    //                 forward_payload: msg.forward_payload
+    //             }.toCell()
+    //         });
+    //     }
+    //     if(msgValue > 0) {
+    //         send(SendParameters{
+    //             to: msg.response_destination,
+    //             value: msgValue,
+    //             body: Excesses{query_id: msg.query_id}.toCell()
+    //         });
+    //     }
+    // }
 
     receive(msg: TokenBurn) {
         let ctx: Context = context();
@@ -119,6 +146,31 @@ contract JettonDefaultWallet {
             }.toCell()
         });
     }
+
+    // receive(msg: TokenMint) {
+    //     let ctx: Context = context();
+    //     require(ctx.sender == self.master, "Invalid sender");  // Check sender
+
+    //     self.balance = self.balance + msg.amount; // Update balance
+    //     require(self.balance >= 0, "Invalid balance");
+
+    //     let fwdFee: Int = ctx.readForwardFee(); // Gas checks
+    //     require(ctx.value > fwdFee + 2 * self.gasConsumption + self.minTonsForStorage, "Invalid value - Mint");
+
+    //     // Mint tokens
+    //     send(SendParameters{  
+    //         to: self.master,
+    //         value: 0,
+    //         mode: 0,
+    //         bounce: true,
+    //         body: TokenMintNotification{
+    //             queryId: msg.queryId,
+    //             amount: msg.amount,
+    //             owner: self.owner,
+    //             response_destination: self.owner
+    //         }.toCell()
+    //     });
+    // }
 
     // receive("getWalletData") {
     //     self.reply(WalletData{balance: self.balance, owner: self.owner, master: self.master}.toCell());

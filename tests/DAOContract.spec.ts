@@ -1,4 +1,4 @@
-import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
+import { Blockchain, SandboxContract, TreasuryContract, printTransactionFees } from '@ton/sandbox';
 import { toNano } from '@ton/core';
 import { DAOContract } from '../wrappers/DAOContract';
 import { JettonDefaultWallet } from '../wrappers/JettonDefaultWallet';
@@ -11,6 +11,7 @@ describe('DAOContract', () => {
     let investor: SandboxContract<TreasuryContract>;
     let daoContract: SandboxContract<DAOContract>;
     let wallet: SandboxContract<JettonDefaultWallet>;
+    let wallet2: SandboxContract<JettonDefaultWallet>;
 
     beforeEach(async () => {
         blockchain = await Blockchain.create();
@@ -76,7 +77,8 @@ describe('DAOContract', () => {
             success: true,
         });
 
-        console.log("tx: ", tx);
+        // console.log("tx: ", tx);
+        console.log("Print Transaction Fees: ", printTransactionFees(tx.transactions));
 
         tx.events.forEach(event => {
             if(event.type === 'account_created') {
@@ -87,11 +89,33 @@ describe('DAOContract', () => {
         // wallet = blockchain.openContract(await JettonDefaultWallet.fromAddress(certAddress));
 
         const walletData = await wallet.getGetWalletData();
-        // expect(investorBalance).toEqual(toNano('1337'));
-        console.log("investorBalance: ", walletData.balance);
-        console.log("Wallet owner: ", walletData.owner);
-        console.log("investor address: ", investor.address);
-        console.log("toNano('1337'): ", toNano('1337'));
+        // expect(investorBalance).toEqual(toNano('1'));
+        console.log("investorBalance 1: ", walletData.balance);
+        console.log("Wallet Master address 1: ", walletData.master);
+        console.log("DAO address 1: ", daoContract.address);
+        console.log("Wallet owner 1: ", walletData.owner);
+        console.log("investor address 1: ", investor.address);
+        
+        const tx2 = await daoContract.send(
+            deployer.getSender(),
+            {
+                value: toNano('0.05'),
+            },
+            "Mint: 100"
+        );
+
+        tx2.events.forEach(event => {
+            if(event.type === 'account_created') {
+                wallet2 = blockchain.openContract(JettonDefaultWallet.fromAddress(event.account));
+            }
+        });
+
+        const walletData2 = await wallet2.getGetWalletData();
+        console.log("investorBalance 2: ", walletData.balance);
+        console.log("Wallet Master address 2: ", walletData.master);
+        console.log("DAO address 2: ", daoContract.address);
+        console.log("Wallet owner 2: ", walletData.owner);
+        console.log("investor address 2: ", investor.address);
     });
 
     it('Someone can create wallet', async () => {
